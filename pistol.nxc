@@ -1,0 +1,66 @@
+#define BT_CONN 1
+#define OUTBOX 5
+long time=0;
+int tri =1;
+int triger=1;
+int yes=0;
+int es=0;
+int u=0;
+int Pk=3.5;
+int PD=7;
+int e=0;
+void Send2BT()
+{
+   SendRemoteNumber(BT_CONN,OUTBOX,1);
+}
+void BTConnect()
+{
+  CommBTConnectionType args;
+  args.Name = "ks2";
+  args.ConnectionSlot = BT_CONN;
+  args.Action = true;
+  if(BluetoothStatus(BT_CONN)!=NO_ERR) SysCommBTConnection(args);
+}
+task pid()
+{
+  es=0;
+  while(true){
+    e = MotorRotationCount(OUT_A)-yes;
+    u = e*Pk+PD*(e-es);
+    if(u>100){
+     u=100;
+    }
+    if(u<-100){
+      u=-100;
+    }
+    OnRev(OUT_A,u);
+    es = e;
+  }
+}
+task main()
+{
+  ResetRotationCount(OUT_A);
+  start pid;
+  time=CurrentTick();
+  SetSensorTouch(IN_1);
+  BTConnect();
+  while(true){
+    if(Sensor(IN_1)==1){
+      yes=60 * triger;
+      triger=triger*-1;
+      for(int i=1500;i>300;i=i-50)
+      {
+        PlayTone(i,10);
+        Wait(10);
+
+      }
+      Send2BT();
+
+    }
+    if(CurrentTick()-time>=500){
+      time=CurrentTick();
+      yes=0;
+      Wait(700);
+    }
+  }
+}
